@@ -1,0 +1,114 @@
+# Initialize registers
+irmovq 0x10000, %rax #ylaraja 1 << 16 eli 65536 eli bit
+irmovq $25600, %r12 #input eli num
+irmovq $0, %rcx #tulos eli res (jos r12 25600 pitäisi tulla 160)
+irmovq $1, %rdi #vakio 1
+irmovq 0x1ff8, %rsp #tämä työnnetty kauas vain koska muuten call ei toimi
+irmovq $2, %rbx #alustetaan divisionin käyttämä jako 2^rbx
+
+main:
+#Tutkitaan lähdetäänkö ylipäätänsä tekee raxkutistusta
+
+    call raxkutistus
+    irmovq $0, %r11 #DEBUGGAUSTA VARTEN
+    irmovq $0, %r14 #DEBUGGAUSTA VARTEN
+    call raxeinolla
+    halt
+    
+raxkutistus:
+    rrmovq %r12, %r11
+    addq %r11, %r11
+    addq %r11, %r11
+    rrmovq %rax, %r14
+    subq %r11, %r14
+    jle raxdiv
+    raxloop:
+    #r11 nelinkertaistaa itsensä
+    rrmovq %rax, %r14
+    addq %r11, %r11
+    addq %r11, %r11
+    addq %rdi, %rbx
+    addq %rdi, %rbx
+    subq %r11, %r14
+    #siirrytään jakotoimituksiin kun r11 suurempi kuin rax kopio r14
+    jle raxdiv
+    
+    #jos r11 pienempi, todetaan että pitää jakaa nelosella +1 kertaa enemmän
+    jmp raxloop
+    
+    raxdiv:
+        rrmovq %rax, %rbp #Halutaan laskea rax arvolla div_oppia, rbp on div_op input
+        call div_op
+        rrmovq %rdx, %rax
+        rrmovq %rax, %r14 #MUISTAPOISTAA VAIN DEBUG
+        ret
+
+raxeinolla:
+    addq %rdi, %r13 #DEBUGGAUSTA VARTEN MONTAKO KERTAA RAXEINOLLA ALKAA POISTHA
+    #rsi=res+bit
+    addq %rcx, %rsi
+    addq %rax, %rsi
+    rrmovq %r12, %r9
+    subq %rsi, %r9
+    #num > res + bit
+    jge raxIf
+    
+    addq %rdi, %r11 #DEBUGGAUSTA VARTEN MONTAKO KERTAA ELSE ALKAA POISTHA
+    
+    #num < res + bit
+    rrmovq %rcx, %rbp
+    irmovq $1, %rbx
+    call div_op
+    rrmovq %rdx,%rcx
+    jmp bitShift
+
+  
+raxIf:
+    addq %rdi, %r14 #DEBUGGAUSTA VARTEN MONTAKO KERTAA RAXIF ALKAA POISTHA
+    
+    subq %rsi, %r12
+    andq %rcx, %rcx
+    je nollaskip
+    rrmovq %rcx, %rbp
+    irmovq $1, %rbx
+    call div_op
+    rrmovq %rdx,%rcx
+    nollaskip:
+    addq %rax, %rcx
+    
+bitShift:
+    rrmovq %rax, %rbp
+    irmovq $2, %rbx
+    call div_op
+    rrmovq %rdx,%rax
+    
+    #(bit != 0)=looppaa alkuun muuten päättyy
+    andq %rax,%rax
+    jne raxeinolla
+    ret
+
+
+div_op:
+    #rbp on jaettava
+    #rbx= montako kertaa jaetaan rbp 2^rbx:llä
+    #rdx PALAUTUSARVO
+    irmovq $0, %rdx #tähän muodostuu tulos
+    irmovq $64, %r8
+    # Subtract rbx from %r8
+    subq %rbx, %r8
+    rshift:
+        # Double %rdx
+        addq %rdx, %rdx
+        # Check if the most significant bit of %rbp is 1
+        andq %rbp, %rbp
+        jge MSB_zero
+        # If it is, xor %rdi and %rdx
+        xorq %rdi, %rdx
+
+    MSB_zero:
+        # Shift %rbp to the left
+        addq %rbp, %rbp
+        # Subtract 1 from %r8 and repeat if not zero
+        subq %rdi, %r8
+        jne rshift
+        ret

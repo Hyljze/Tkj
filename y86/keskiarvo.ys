@@ -1,0 +1,28 @@
+main:
+    irmovq $1, %r10  # vakio 1
+    irmovq $0, %r11
+
+loop:
+    popq %r8          # popataan stäkistä rekisteriin %r8
+    addq %r8, %rdi   # lisätään r8 arvo %rdi
+    addq %r10, %rsi  # Kasvatetaan rsi arvoa yhdellä (r10)
+    jmp test         # katsotaan onko rsp = rbp (eli stäkki on tyhjennetty
+
+test:
+    rrmovq %rsp, %r8 # rsp eli "ylin" elementti
+    rrmovq %rbp, %r9 # rbp eli alkupää
+
+    subq %r9, %r8     # vähennyslasku ZF varten
+    jne loop         # jne ( = not eq) eli jos stäkissä on vielä tavaraa
+    jmp division     # jos päästiin tänne asti niin stäkki on tyhjä -> tehdään jakolasku
+
+division:
+    rrmovq %rdi, %r11
+    iloop:
+        addq %r10, %rax
+        subq %rsi, %rdi
+        rrmovq %rdi, %r11
+        subq %rsi, %r11
+        jge division
+    halt
+	

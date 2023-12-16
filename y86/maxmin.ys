@@ -1,0 +1,32 @@
+main:
+irmovq $8, %r11
+mrmovq (%rsp), %rdi
+mrmovq (%rdi), %rsi
+
+loop: 
+    rrmovq %rdi, %r8
+    rrmovq %rsi, %r9
+    popq %r10
+    call lessThan
+    call moreThan
+    jmp test
+    
+test:
+    rrmovq %rsp, %r8
+    rrmovq %rbp, %r9
+    addq %r11, %r8
+    subq %r8, %r9
+    jne loop
+    halt
+    
+    
+lessThan:
+    subq %r10, %r9
+    cmovge %r10, %rsi
+    ret
+    
+moreThan:
+    subq %r10, %r8
+    cmovle %r10, %rdi
+    ret
+    

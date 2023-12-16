@@ -1,0 +1,93 @@
+
+main:
+    irmovq stack, %rbp
+    irmovq stack, %rsp
+    irmovq $0, %r13     #staticValue 0
+    irmovq $8, %r10     #staticValue 8
+    irmovq $1, %r14     #staticValue 1
+
+
+    irmovq array, %r8   #move array
+    call loop
+    halt
+
+loop:
+
+    mrmovq (%r8), %r9
+    andq %r11, %r9
+    subq %r13, %r9
+    jne shift
+
+    irmovq $8, %r10     #Return 8
+    addq %r10, %r8
+    mrmovq (%r8), %r9
+    addq %r14, %rbx
+    subq %r13, %r9
+    je end
+    jmp loop
+
+shift:
+    subq %r14, %r9              #sub 1
+
+    rrmovq %r12, %rcx           #move value for bit shift
+    rrmovq %rbx, %r10
+    call bShiftL
+    addq %rcx, %rax
+
+    irmovq $8, %r10             #Return 8
+    addq %r10, %r8
+    addq %r14, %rbx
+    jmp loop
+
+
+bShiftL:      #result %rax input %rax <<= %r10
+    subq %r13, %r10
+    jne leftLoop
+    ret
+    leftLoop:
+        addq %rcx, %rcx     #Move to left
+        subq %r14, %r10
+        jmp bShiftL
+
+
+end:
+    halt
+
+.pos 0x200
+stack:
+
+.pos 0x400          # 2^n
+.align 8
+array: 
+.quad 0x1
+.quad 0x2
+.quad 0x4
+.quad 0x8
+.quad 0x10
+.quad 0x20
+.quad 0x40
+.quad 0x80
+.quad 0x100
+.quad 0x200
+.quad 0x400
+.quad 0x800
+.quad 0x1000
+.quad 0x2000
+.quad 0x4000
+.quad 0x8000
+.quad 0x10000
+.quad 0x20000
+.quad 0x40000
+.quad 0x80000
+.quad 0x100000
+.quad 0x200000
+.quad 0x400000
+.quad 0x800000
+.quad 0x1000000
+.quad 0x2000000
+.quad 0x4000000
+.quad 0x8000000
+.quad 0x10000000
+.quad 0x20000000
+.quad 0x40000000
+.quad 0x80000000
